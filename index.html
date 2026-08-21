@@ -1,0 +1,378 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Бинарный поиск — Алгоритмы</title>
+<style>
+  :root{
+    --bg:#0d1117; --panel:#161b22; --line:#30363d; --ink:#e6edf3; --dim:#8b949e;
+    --acc:#58a6ff; --ok:#3fb950; --bad:#f85149; --warn:#d29922;
+    --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+       font:16px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  .wrap{max-width:860px;margin:0 auto;padding:32px 20px 80px}
+  header{border-bottom:1px solid var(--line);padding-bottom:20px;margin-bottom:32px}
+  .kicker{color:var(--dim);font-size:13px;letter-spacing:.08em;text-transform:uppercase}
+  h1{font-size:34px;margin:6px 0 10px;letter-spacing:-.02em}
+  h2{font-size:22px;margin:40px 0 12px;letter-spacing:-.01em}
+  h3{font-size:17px;margin:26px 0 8px;color:var(--acc)}
+  .lede{color:var(--dim);font-size:17px}
+  code,kbd{font-family:var(--mono);font-size:.92em}
+  code{background:#1f242c;padding:2px 5px;border-radius:4px}
+  pre{background:var(--panel);border:1px solid var(--line);border-radius:8px;
+      padding:14px 16px;overflow-x:auto;font-family:var(--mono);font-size:13.5px;line-height:1.55}
+  pre .c{color:var(--dim)}  pre .k{color:#ff7b72}  pre .s{color:#a5d6ff}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:18px;margin:18px 0}
+  .note{border-left:3px solid var(--warn);padding-left:14px;color:var(--dim);margin:16px 0}
+  .note b{color:var(--ink)}
+
+  /* --- визуализация --- */
+  .viz-controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+  .viz-controls label{color:var(--dim);font-size:13px}
+  input[type=number],input[type=text]{background:#0d1117;color:var(--ink);border:1px solid var(--line);
+       border-radius:6px;padding:6px 9px;font-family:var(--mono);font-size:13px;width:110px}
+  button{background:#21262d;color:var(--ink);border:1px solid var(--line);border-radius:6px;
+         padding:7px 14px;cursor:pointer;font-size:13.5px}
+  button:hover{background:#30363d;border-color:#8b949e}
+  button.primary{background:#1f6feb;border-color:#1f6feb}
+  button.primary:hover{background:#388bfd}
+  button:disabled{opacity:.4;cursor:not-allowed}
+  .bars{display:flex;gap:3px;align-items:flex-end;height:120px;margin:14px 0 6px}
+  .bar{flex:1;background:#21262d;border-radius:3px 3px 0 0;position:relative;
+       transition:background .18s,transform .18s;min-width:8px}
+  .bar span{position:absolute;bottom:-20px;left:50%;transform:translateX(-50%);
+            font-family:var(--mono);font-size:10px;color:var(--dim)}
+  .bar.out{opacity:.18}
+  .bar.lo{background:#1f6feb}  .bar.hi{background:#8957e5}
+  .bar.mid{background:var(--warn);transform:scaleY(1.06)}
+  .bar.found{background:var(--ok);transform:scaleY(1.12)}
+  .legend{display:flex;gap:16px;font-size:12px;color:var(--dim);margin:22px 0 4px;flex-wrap:wrap}
+  .dot{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:5px;vertical-align:middle}
+  .log{font-family:var(--mono);font-size:12.5px;color:var(--dim);background:#0d1117;
+       border:1px solid var(--line);border-radius:6px;padding:10px 12px;margin-top:12px;
+       min-height:76px;white-space:pre-wrap}
+  .log b{color:var(--ink);font-weight:600}
+
+  /* --- задача --- */
+  textarea{width:100%;background:#0d1117;color:var(--ink);border:1px solid var(--line);
+           border-radius:8px;padding:12px;font-family:var(--mono);font-size:13px;line-height:1.5;min-height:150px}
+  .verdict{margin-top:12px;padding:12px 14px;border-radius:8px;font-size:14px;display:none}
+  .verdict.pass{display:block;background:rgba(63,185,80,.12);border:1px solid var(--ok);color:var(--ok)}
+  .verdict.fail{display:block;background:rgba(248,81,73,.12);border:1px solid var(--bad);color:var(--bad)}
+  .verdict pre{background:transparent;border:0;padding:6px 0;color:inherit;font-size:12.5px}
+  table{width:100%;border-collapse:collapse;margin:14px 0;font-size:14px}
+  th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line)}
+  th{color:var(--dim);font-weight:600;font-size:12.5px;text-transform:uppercase;letter-spacing:.04em}
+  footer{margin-top:60px;padding-top:20px;border-top:1px solid var(--line);color:var(--dim);font-size:13px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="kicker">Алгоритмы · поиск · урок 1</div>
+  <h1>Бинарный поиск</h1>
+  <p class="lede">Все думают, что умеют его писать. По классической оценке Бентли,
+  правильно с первого раза его пишет меньшинство даже среди профессионалов —
+  и ломается он не в идее, а в трёх конкретных местах.</p>
+</header>
+
+<h2>Идея</h2>
+<p>Массив отсортирован. Смотрим в середину: если там искомое — нашли; если больше —
+всё правое можно выбросить целиком; если меньше — выбросить левое. Каждый шаг
+<b>уполовинивает</b> область поиска, поэтому шагов не больше log₂n.</p>
+
+<div class="panel">
+  <b>Что это даёт руками.</b> Массив на миллион элементов — <b>20 шагов</b> вместо
+  миллиона. На миллиард — <b>30</b>. Именно поэтому «отсортировать, а потом искать»
+  почти всегда выгоднее, чем искать перебором, даже с учётом сортировки.
+</div>
+
+<h2>Как это выглядит</h2>
+<div class="panel">
+  <div class="viz-controls">
+    <label>размер <input type="number" id="size" value="16" min="4" max="48"></label>
+    <label>ищем <input type="number" id="target" value="23"></label>
+    <button id="gen">новый массив</button>
+    <button id="step">шаг</button>
+    <button class="primary" id="run">целиком</button>
+  </div>
+  <div class="bars" id="bars"></div>
+  <div class="legend">
+    <span><i class="dot" style="background:#1f6feb"></i>граница lo</span>
+    <span><i class="dot" style="background:#8957e5"></i>граница hi</span>
+    <span><i class="dot" style="background:#d29922"></i>середина</span>
+    <span><i class="dot" style="background:#3fb950"></i>найдено</span>
+    <span><i class="dot" style="background:#21262d"></i>ещё в поиске</span>
+  </div>
+  <div class="log" id="log">Нажми «шаг» или «целиком».</div>
+</div>
+
+<h2>Три места, где он ломается</h2>
+
+<h3>1. Переполнение в середине</h3>
+<pre><span class="c">// так пишут почти все — и это баг, проживший в JDK 9 лет</span>
+<span class="k">int</span> mid = (lo + hi) / <span class="s">2</span>;
+
+<span class="c">// так правильно: разность не переполняется</span>
+<span class="k">int</span> mid = lo + (hi - lo) / <span class="s">2</span>;</pre>
+<p>При больших <code>lo</code> и <code>hi</code> сумма вылезает за <code>int</code> и
+становится отрицательной. В Python целые безразмерные, и баг не воспроизводится —
+поэтому питонист узнаёт о нём, когда пишет на C++ или Java.</p>
+
+<h3>2. Инвариант границ</h3>
+<p>Единственный вопрос, на который надо ответить до первой строки:
+<b>полуинтервал <code>[lo, hi)</code> или отрезок <code>[lo, hi]</code>?</b>
+Смешение — источник почти всех зависаний. Правило простое: выбрал —
+и тогда условие цикла, сдвиг границ и возврат обязаны быть согласованы.</p>
+<table>
+  <tr><th>решение</th><th>[lo, hi)</th><th>[lo, hi]</th></tr>
+  <tr><td>hi изначально</td><td><code>n</code></td><td><code>n - 1</code></td></tr>
+  <tr><td>условие цикла</td><td><code>lo &lt; hi</code></td><td><code>lo &lt;= hi</code></td></tr>
+  <tr><td>сдвиг вправо</td><td><code>lo = mid + 1</code></td><td><code>lo = mid + 1</code></td></tr>
+  <tr><td>сдвиг влево</td><td><code>hi = mid</code></td><td><code>hi = mid - 1</code></td></tr>
+</table>
+
+<h3>3. Зависание</h3>
+<p>Если в какой-то ветке граница не двигается — <code>hi = mid</code> при отрезке
+<code>[lo, hi]</code>, — цикл крутится вечно на двух элементах. Проверка, которая это
+ловит: <b>убедись, что после каждой итерации область поиска строго уменьшилась.</b></p>
+
+<div class="note">
+  <b>Признак, что ты понял, а не запомнил:</b> сможешь написать не «найти элемент»,
+  а <b>«найти первый элемент, который ≥ x»</b> (нижняя граница). Именно эта версия
+  нужна в реальных задачах, и именно она не пишется по памяти.
+</div>
+
+<h2>Задача</h2>
+<p>Реализуй <code>lower_bound(a, x)</code> — индекс <b>первого</b> элемента, который
+<code>≥ x</code>. Если такого нет — длина массива. Массив отсортирован по неубыванию,
+дубликаты возможны.</p>
+
+<div class="panel">
+  <textarea id="code" spellcheck="false">def lower_bound(a, x):
+    lo, hi = 0, len(a)
+    while lo < hi:
+        mid = lo + (hi - lo) // 2
+        # твой код
+    return lo</textarea>
+  <div style="margin-top:10px;display:flex;gap:10px">
+    <button class="primary" id="check">проверить</button>
+    <button id="reveal">показать решение</button>
+  </div>
+  <div class="verdict" id="verdict"></div>
+</div>
+
+<footer>
+  MVP сайта по алгоритмам. Формат урока: <b>идея → визуализация → где ломается →
+  задача с проверкой</b>. Один урок сделан целиком, чтобы задать образец;
+  остальные пишутся по нему.
+</footer>
+</div>
+
+<script>
+// ---------- визуализация ----------
+let arr = [], lo = 0, hi = 0, done = false, steps = 0;
+const $ = id => document.getElementById(id);
+
+function gen(){
+  const n = Math.max(4, Math.min(48, +$('size').value || 16));
+  const s = new Set();
+  while (s.size < n) s.add(Math.floor(Math.random() * 99) + 1);
+  arr = [...s].sort((a, b) => a - b);
+  lo = 0; hi = arr.length - 1; done = false; steps = 0;
+  $('log').textContent = 'Массив готов. Область поиска — весь массив.';
+  draw(-1);
+}
+
+function draw(mid, found = -1){
+  const max = Math.max(...arr, 1);
+  $('bars').innerHTML = arr.map((v, i) => {
+    let cls = 'bar';
+    if (i < lo || i > hi) cls += ' out';
+    if (i === lo && !done) cls += ' lo';
+    if (i === hi && !done) cls += ' hi';
+    if (i === mid) cls += ' mid';
+    if (i === found) cls += ' found';
+    const h = Math.round(18 + (v / max) * 82);
+    return `<div class="${cls}" style="height:${h}%"><span>${v}</span></div>`;
+  }).join('');
+}
+
+function step(){
+  if (done) return;
+  const t = +$('target').value;
+  if (lo > hi){
+    done = true;
+    $('log').innerHTML = `<b>Не найдено.</b> Область поиска пуста за ${steps} шаг(ов).\n` +
+      `Место вставки: индекс ${lo} — это и есть ответ lower_bound.`;
+    draw(-1); return;
+  }
+  const mid = lo + ((hi - lo) >> 1);
+  steps++;
+  if (arr[mid] === t){
+    done = true;
+    draw(mid, mid);
+    $('log').innerHTML = `<b>Найдено за ${steps} шаг(ов):</b> a[${mid}] = ${t}\n` +
+      `Перебором понадобилось бы до ${arr.length}. log₂(${arr.length}) ≈ ${Math.ceil(Math.log2(arr.length))}.`;
+    return;
+  }
+  const goRight = arr[mid] < t;
+  $('log').innerHTML = `Шаг ${steps}: mid=${mid}, a[mid]=${arr[mid]} ` +
+    `${goRight ? '&lt;' : '&gt;'} ${t} → выбрасываем ${goRight ? 'левую' : 'правую'} половину ` +
+    `(${goRight ? (mid - lo + 1) : (hi - mid + 1)} элементов).\n` +
+    `Было в поиске: ${hi - lo + 1}. `;
+  draw(mid);
+  if (goRight) lo = mid + 1; else hi = mid - 1;
+  $('log').innerHTML += `Стало: ${Math.max(0, hi - lo + 1)}.`;
+}
+
+$('gen').onclick = gen;
+$('step').onclick = step;
+$('run').onclick = () => { let guard = 0; while (!done && guard++ < 200) step(); };
+
+// ---------- проверка задачи ----------
+// 🔴 ПОЧЕМУ ЗДЕСЬ НЕ РЕГУЛЯРКА.
+// Первая редакция закрывала блоки регуляркой — и падала на первом же эталонном
+// решении: в Python блок закрывается ОТСТУПОМ, а регулярка про отступы не знает
+// и молча теряет закрывающие скобки. Правильно — считать отступы, это 25 строк.
+// Потолок: поддерживается подмножество (def/if/elif/else/while/for/return,
+// множественное присваивание). Настоящая проверка требует исполнения Python
+// (Pyodide или судья на сервере) — в MVP этого нет и об этом сказано вслух.
+function py2js(src){
+  const lines = src.replace(/\t/g, '    ').split('\n');
+  const out = [];
+  const stack = [];                       // уровни отступа открытых блоков
+  const declared = new Set();             // имя объявляется ОДИН раз: в Python
+                                          // присваивание и объявление неразличимы,
+                                          // в JS повторный let/var — SyntaxError
+  for (const raw of lines){
+    const line = raw.replace(/#.*$/, '');
+    if (!line.trim()){ continue; }
+    const indent = line.match(/^ */)[0].length;
+    while (stack.length && indent <= stack[stack.length - 1]){
+      stack.pop(); out.push('}');
+    }
+    let body = line.trim();
+    const opens = /:$/.test(body);
+    if (opens){
+      body = body.slice(0, -1);
+      body = body
+        .replace(/^def\s+(\w+)\s*\((.*)\)$/, 'function $1($2) {')
+        .replace(/^while\s+(.*)$/,  'while ($1) {')
+        .replace(/^if\s+(.*)$/,     'if ($1) {')
+        .replace(/^elif\s+(.*)$/,   'else if ($1) {')
+        .replace(/^else$/,           'else {')
+        .replace(/^for\s+(\w+)\s+in\s+range\((.*)\)$/, 'for (let $1 = 0; $1 < $2; $1++) {');
+      if (/else \{$/.test(body) || /else if/.test(body)){
+        // склеить с предыдущей закрывающей скобкой
+        while (out.length && out[out.length - 1] === '}') { out.pop(); body = '} ' + body; break; }
+      }
+      stack.push(indent);
+    }
+    body = body
+      .replace(/\blen\(/g, 'LEN(')
+      // Целочисленное деление: `a // b` — это floor(a/b), а не a/b.
+      // Замена на голый `/` давала float, и a[1.5] в JS — undefined.
+      // Тесты это НЕ поймали (прошли случайно) — поймал разбор вывода глазами.
+      // Ограничение регулярки названо: операнд — имя, число или ОДНА скобочная
+      // группа без вложенных скобок. Сложнее — нужен парсер, а не замена.
+      .replace(/(\([^()]*\)|[\w.]+)\s*\/\/\s*(\([^()]*\)|[\w.]+)/g,
+               'Math.floor($1 / $2)')
+      .replace(/\band\b/g, '&&').replace(/\bor\b/g, '||').replace(/\bnot\b/g, '!')
+      .replace(/\bTrue\b/g, 'true').replace(/\bFalse\b/g, 'false');
+    // множественное присваивание: lo, hi = 0, len(a)
+    const multi = body.match(/^([\w\s,]+)=([^=].*)$/);
+    if (multi && multi[1].includes(',')){
+      const names = multi[1].split(',').map(t => t.trim()).filter(Boolean);
+      const fresh = names.filter(n => !declared.has(n));
+      fresh.forEach(n => declared.add(n));
+      const decl = fresh.length === names.length ? 'var ' : '';
+      if (!decl) fresh.forEach(n => out.push('var ' + n + ';'));
+      body = `${decl}[${names.join(', ')}] = [${multi[2].trim()}];`;
+      if (!decl) body = '(' + body + ')';
+    } else if (/^\w+\s*=[^=]/.test(body)){
+      const name = body.match(/^(\w+)/)[1];
+      const pre = declared.has(name) ? '' : 'var ';
+      declared.add(name);
+      body = pre + body + ';';
+    } else if (!opens && !/[{};]$/.test(body)){
+      body += ';';
+    }
+    out.push(body);
+  }
+  while (stack.length){ stack.pop(); out.push('}'); }
+  return out.join('\n');
+}
+
+const TESTS = [
+  {a:[1,3,5,7], x:5, e:2, why:'обычный случай'},
+  {a:[1,3,5,7], x:4, e:2, why:'элемента нет — первый больший'},
+  {a:[1,3,5,7], x:0, e:0, why:'меньше всех'},
+  {a:[1,3,5,7], x:9, e:4, why:'больше всех → длина массива'},
+  {a:[2,2,2,2], x:2, e:0, why:'дубликаты → ПЕРВЫЙ, не любой'},
+  {a:[], x:1, e:0, why:'пустой массив'},
+  {a:[5], x:5, e:0, why:'один элемент, равен'},
+  {a:[1,2,2,2,3], x:2, e:1, why:'дубликаты внутри'},
+];
+
+$('check').onclick = () => {
+  const v = $('verdict');
+  let fn;
+  try {
+    const body = py2js($('code').value);
+    fn = new Function('LEN', body + '; return lower_bound;')(x => x.length);
+  } catch (e){
+    v.className = 'verdict fail';
+    v.innerHTML = `<b>Не разобрал код:</b> ${e.message}`;
+    return;
+  }
+  const fails = [];
+  for (const t of TESTS){
+    let got;
+    try {
+      got = (function(){
+        let r, timer = Date.now();
+        const guard = setInterval(() => {}, 0); clearInterval(guard);
+        r = fn(t.a, t.x);
+        if (Date.now() - timer > 1000) throw new Error('слишком долго');
+        return r;
+      })();
+    } catch (e){ got = 'ошибка: ' + e.message; }
+    if (got !== t.e) fails.push(`a=[${t.a}] x=${t.x} → ждали ${t.e}, получили ${got}   (${t.why})`);
+  }
+  if (!fails.length){
+    v.className = 'verdict pass';
+    v.innerHTML = `<b>Принято.</b> ${TESTS.length} из ${TESTS.length}, включая дубликаты и пустой массив.<br>` +
+      `Проверь себя дальше: сможешь так же написать <code>upper_bound</code> — первый строго больший?`;
+  } else {
+    v.className = 'verdict fail';
+    v.innerHTML = `<b>${fails.length} из ${TESTS.length} не прошли:</b><pre>${fails.join('\n')}</pre>`;
+  }
+};
+
+$('reveal').onclick = () => {
+  $('code').value =
+`def lower_bound(a, x):
+    lo, hi = 0, len(a)          # полуинтервал [lo, hi)
+    while lo < hi:              # согласовано с hi = len(a)
+        mid = lo + (hi - lo) // 2
+        if a[mid] < x:
+            lo = mid + 1        # mid точно не подходит
+        else:
+            hi = mid            # mid ещё может быть ответом
+    return lo                   # lo == hi — точка вставки`;
+  const v = $('verdict');
+  v.className = 'verdict pass';
+  v.innerHTML = '<b>Ключевая строка — <code>hi = mid</code>, а не <code>mid - 1</code>.</b> ' +
+    'При полуинтервале правая граница исключена, поэтому mid остаётся кандидатом. ' +
+    'Именно здесь и ломается написанное по памяти.';
+};
+
+gen();
+</script>
+</body>
+</html>
