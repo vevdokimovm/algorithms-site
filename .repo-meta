@@ -1,0 +1,3 @@
+description=Обучающий сайт по алгоритмам: теория → интерактивная визуализация → типичные ошибки → задача с автопроверкой. Один HTML-файл, без сборки и сервера. MVP: урок «Бинарный поиск».
+topics=algorithms,education,interactive,single-file,javascript,mvp,pet-project
+private=true
