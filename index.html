@@ -9,6 +9,16 @@
     --bg:#0d1117; --panel:#161b22; --line:#30363d; --ink:#e6edf3; --dim:#8b949e;
     --acc:#58a6ff; --ok:#3fb950; --bad:#f85149; --warn:#d29922;
     --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,monospace;
+    --code-bg:#1f242c; --input-bg:#0d1117;
+    --surface:#21262d; --surface-hover:#30363d; --surface-border:#8b949e;
+  }
+  /* Светлая тема — палитра GitHub light, та же структура токенов, чтобы
+     ничего в разметке ниже не знало о теме вообще. */
+  html[data-theme="light"]{
+    --bg:#ffffff; --panel:#f6f8fa; --line:#d0d7de; --ink:#1f2328; --dim:#59636e;
+    --acc:#0969da; --ok:#1a7f37; --bad:#cf222e; --warn:#9a6700;
+    --code-bg:#eef1f4; --input-bg:#ffffff;
+    --surface:#eaeef2; --surface-hover:#d0d7de; --surface-border:#8c959f;
   }
   *{box-sizing:border-box}
   body{margin:0;background:var(--bg);color:var(--ink);
@@ -21,7 +31,7 @@
   h3{font-size:17px;margin:26px 0 8px;color:var(--acc)}
   .lede{color:var(--dim);font-size:17px}
   code,kbd{font-family:var(--mono);font-size:.92em}
-  code{background:#1f242c;padding:2px 5px;border-radius:4px}
+  code{background:var(--code-bg);padding:2px 5px;border-radius:4px}
   pre{background:var(--panel);border:1px solid var(--line);border-radius:8px;
       padding:14px 16px;overflow-x:auto;font-family:var(--mono);font-size:13.5px;line-height:1.55}
   pre .c{color:var(--dim)}  pre .k{color:#ff7b72}  pre .s{color:#a5d6ff}
@@ -32,16 +42,16 @@
   /* --- визуализация --- */
   .viz-controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
   .viz-controls label{color:var(--dim);font-size:13px}
-  input[type=number],input[type=text]{background:#0d1117;color:var(--ink);border:1px solid var(--line);
+  input[type=number],input[type=text]{background:var(--input-bg);color:var(--ink);border:1px solid var(--line);
        border-radius:6px;padding:6px 9px;font-family:var(--mono);font-size:13px;width:110px}
-  button{background:#21262d;color:var(--ink);border:1px solid var(--line);border-radius:6px;
+  button{background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:6px;
          padding:7px 14px;cursor:pointer;font-size:13.5px}
-  button:hover{background:#30363d;border-color:#8b949e}
-  button.primary{background:#1f6feb;border-color:#1f6feb}
+  button:hover{background:var(--surface-hover);border-color:var(--surface-border)}
+  button.primary{background:#1f6feb;border-color:#1f6feb;color:#fff}
   button.primary:hover{background:#388bfd}
   button:disabled{opacity:.4;cursor:not-allowed}
   .bars{display:flex;gap:3px;align-items:flex-end;height:120px;margin:14px 0 6px}
-  .bar{flex:1;background:#21262d;border-radius:3px 3px 0 0;position:relative;
+  .bar{flex:1;background:var(--surface);border-radius:3px 3px 0 0;position:relative;
        transition:background .18s,transform .18s;min-width:8px}
   .bar span{position:absolute;bottom:-20px;left:50%;transform:translateX(-50%);
             font-family:var(--mono);font-size:10px;color:var(--dim)}
@@ -51,13 +61,13 @@
   .bar.found{background:var(--ok);transform:scaleY(1.12)}
   .legend{display:flex;gap:16px;font-size:12px;color:var(--dim);margin:22px 0 4px;flex-wrap:wrap}
   .dot{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:5px;vertical-align:middle}
-  .log{font-family:var(--mono);font-size:12.5px;color:var(--dim);background:#0d1117;
+  .log{font-family:var(--mono);font-size:12.5px;color:var(--dim);background:var(--input-bg);
        border:1px solid var(--line);border-radius:6px;padding:10px 12px;margin-top:12px;
        min-height:76px;white-space:pre-wrap}
   .log b{color:var(--ink);font-weight:600}
 
   /* --- задача --- */
-  textarea{width:100%;background:#0d1117;color:var(--ink);border:1px solid var(--line);
+  textarea{width:100%;background:var(--input-bg);color:var(--ink);border:1px solid var(--line);
            border-radius:8px;padding:12px;font-family:var(--mono);font-size:13px;line-height:1.5;min-height:150px}
   .verdict{margin-top:12px;padding:12px 14px;border-radius:8px;font-size:14px;display:none}
   .verdict.pass{display:block;background:rgba(63,185,80,.12);border:1px solid var(--ok);color:var(--ok)}
@@ -67,17 +77,24 @@
   th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line)}
   th{color:var(--dim);font-weight:600;font-size:12.5px;text-transform:uppercase;letter-spacing:.04em}
   footer{margin-top:60px;padding-top:20px;border-top:1px solid var(--line);color:var(--dim);font-size:13px}
+  header{display:flex;justify-content:space-between;align-items:flex-start;gap:16px}
+  #theme-toggle{flex:none;background:var(--surface);color:var(--ink);border:1px solid var(--line);
+       border-radius:6px;padding:6px 10px;cursor:pointer;font-size:15px;line-height:1}
+  #theme-toggle:hover{background:var(--surface-hover)}
 </style>
 </head>
 <body>
 <div class="wrap">
 
 <header>
-  <div class="kicker">Алгоритмы · поиск · урок 1</div>
-  <h1>Бинарный поиск</h1>
-  <p class="lede">Все думают, что умеют его писать. По классической оценке Бентли,
-  правильно с первого раза его пишет меньшинство даже среди профессионалов —
-  и ломается он не в идее, а в трёх конкретных местах.</p>
+  <div>
+    <div class="kicker">Алгоритмы · поиск · урок 1</div>
+    <h1>Бинарный поиск</h1>
+    <p class="lede">Все думают, что умеют его писать. По классической оценке Бентли,
+    правильно с первого раза его пишет меньшинство даже среди профессионалов —
+    и ломается он не в идее, а в трёх конкретных местах.</p>
+  </div>
+  <button id="theme-toggle" title="светлая/тёмная тема" aria-label="переключить тему"></button>
 </header>
 
 <h2>Идея</h2>
@@ -106,7 +123,7 @@
     <span><i class="dot" style="background:#8957e5"></i>граница hi</span>
     <span><i class="dot" style="background:#d29922"></i>середина</span>
     <span><i class="dot" style="background:#3fb950"></i>найдено</span>
-    <span><i class="dot" style="background:#21262d"></i>ещё в поиске</span>
+    <span><i class="dot" style="background:var(--surface)"></i>ещё в поиске</span>
   </div>
   <div class="log" id="log">Нажми «шаг» или «целиком».</div>
 </div>
@@ -174,6 +191,30 @@
 </div>
 
 <script>
+// ---------- тема ----------
+// Дефолт — тёмная (как было до этой правки, поведение для всех прежних
+// посетителей не меняется). Переключатель запоминает выбор в localStorage;
+// если хранилище недоступно (приватный режим и т.п.) — тема просто не
+// переживает перезагрузку, страница не падает.
+(function initTheme(){
+  let saved = null;
+  try { saved = localStorage.getItem('theme'); } catch {}
+  if (saved === 'light') document.documentElement.setAttribute('data-theme', 'light');
+  const btn = document.getElementById('theme-toggle');
+  const paint = () => {
+    const light = document.documentElement.getAttribute('data-theme') === 'light';
+    btn.textContent = light ? '🌙' : '☀️';
+  };
+  btn.onclick = () => {
+    const light = document.documentElement.getAttribute('data-theme') === 'light';
+    if (light) document.documentElement.removeAttribute('data-theme');
+    else document.documentElement.setAttribute('data-theme', 'light');
+    try { localStorage.setItem('theme', light ? 'dark' : 'light'); } catch {}
+    paint();
+  };
+  paint();
+})();
+
 // ---------- визуализация ----------
 let arr = [], lo = 0, hi = 0, done = false, steps = 0;
 const $ = id => document.getElementById(id);
