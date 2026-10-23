@@ -1,7 +1,7 @@
 # algorithms-site
 
 <!-- STATUS -->
-> **Сейчас:** `v1.2.4` · 2026-08-29 · Пересборка: архив содержал устаревший канон
+> **Сейчас:** `v1.2.5` · 2026-10-23 07:01 · Вид репы — pet-project
 > Открытое — [`ROADMAP.md`](ROADMAP.md) · на владельце — [`TASKS.md`](TASKS.md) · где стоим — [`WATCHLOG.md`](WATCHLOG.md) §0.
 <!-- /STATUS -->
 
